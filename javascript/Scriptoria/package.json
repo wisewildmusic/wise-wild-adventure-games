@@ -1,0 +1,7 @@
+{
+  "name": "scriptoria",
+  "description": "The Lost Promise of Scriptoria: a text adventure with JavaScript challenges, written in JavaScript.",
+  "private": true,
+  "type": "module",
+  "main": "main.js"
+}
