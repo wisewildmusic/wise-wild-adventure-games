@@ -3,6 +3,10 @@
 The source code of the ten text adventures on the Wise Wild Music website. Each one teaches a
 programming language, or the language of AI, through a quest of challenges that ends with a final boss.
 
+**Play it live: [https://www.WiseWildMusic.com](https://www.WiseWildMusic.com)**
+
+On that page, click **Wise Wild Music**, then **Adventure** in the menu at the top, and choose a game.
+
 | Game | Teaches | Written in | Source |
 |---|---|---|---|
 | The Lost Treasure of Pythonia | Python | Python | `site/pythonia.py` (adapted from `AdventuresInPython.py`) |
