@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+  <h1 class="visually-hidden">Wise Wild</h1>
+  <div class="hero-card">
+    <img class="hero-art" src="{{ url_for('static', filename=hero_image) }}" alt="A wild-haired scientist conducting a lab full of synthesizers, cables and glowing tubes" width="1024" height="1024" fetchpriority="high">
+  </div>
+</section>
+
+<section id="sonic" class="section section--panel">
+  <div class="wrap split">
+    <h2 class="display">Sonic architecture</h2>
+    <p>{{ intro }}</p>
+  </div>
+</section>
+
+<section id="listen" class="section">
+  <div class="wrap">
+    <h2 class="display">Dissemination</h2>
+    <div class="cards">
+      {% for c in channels %}
+      <article class="card">
+        <h3>{{ c.title }}</h3>
+        <p>{{ c.text }}</p>
+        <button class="button" type="button" data-loop-player>{{ c.cta }}</button>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{# Home page only: a flying saucer after the social icons that opens the music library. #}
+{% block footer_icons %}
+      <li>
+        <a class="ufo-link" href="{{ url_for('songs') }}" aria-label="Music library" title="Music library">
+          {% include "ufo-icon.html" %}
+        </a>
+      </li>
+{% endblock %}

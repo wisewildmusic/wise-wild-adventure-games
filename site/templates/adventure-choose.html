@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Choose Your Language | Wise Wild Music{% endblock %}
+
+{% block content %}
+<section class="adventure">
+  <article class="choose-game">
+    <h1 class="scene-title">Choose your language</h1>
+    {#- Besides the three about SQL and the one about AI, the rest are written in the language they test you on: fewer on a site without every program. -#}
+    {% set numbers = ["none", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"] %}
+    <p class="choose-intro">{{ numbers[choices|length]|capitalize }} adventures: {{ numbers[choices|length - 4] }} written in the language they test you on, three written
+      in Python that test you on the great dialects of SQL, and at the very heart of the saucer, the longest of them all, one that teaches you the language of AI itself.
+      Which will you prove yourself in?</p>
+
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+    <p class="flash flash--{{ category }}" role="status">{{ message }}</p>
+    {% endfor %}
+
+    {# The saucer's panels are for mouse and touch. Keyboards and screen readers get the same links
+       just below, so these are left out of their way. Panels for games not written yet are plain spans,
+       with no link until their games are added. #}
+    <div class="game-wheel">
+      <img src="{{ url_for('static', filename='img/adventure/language-selector.webp') }}" width="1200" height="800"
+           alt="The underside of a flying saucer, with a glowing panel for each of the languages listed below{% if coming %}, and for those still to come{% endif %}.">
+      {% for choice in choices %}
+      <a class="game-spot game-spot--{{ choice.game.key }}" href="{{ url_for('adventure_game', game_key=choice.game.key) }}"
+         title="{{ choice.game.language }}: {{ choice.game.title }}" tabindex="-1" aria-hidden="true"></a>
+      {% endfor %}
+      {% for game in coming %}
+      <span class="game-spot game-spot--soon game-spot--{{ game.key }}" title="{{ game.language }}: coming soon" aria-hidden="true"></span>
+      {% endfor %}
+    </div>
+    {% if coming %}
+    <p class="choose-soon">Coming soon: {{ coming|map(attribute="language")|join(", ") }}.</p>
+    {% endif %}
+
+    <div class="game-choices">
+      {% for choice in choices %}
+      {% set game = choice.game %}
+      {#- The keys 1 to 9, then 0 for the tenth. -#}
+      <a class="game-choice" href="{{ url_for('adventure_game', game_key=game.key) }}" data-key="{{ loop.index % 10 }}">
+        <span class="game-language"><span class="key">{{ loop.index % 10 }}</span> {{ game.language }}</span>
+        <span class="game-title">{{ game.title }}</span>
+        <span class="game-blurb">{{ game.blurb }}</span>
+        {% if choice.champion %}
+        <span class="game-champion">{{ game.master }}: {{ choice.champion.explorer }} ({{ choice.champion.score }})</span>
+        {% endif %}
+        {% if choice.in_play %}
+        <span class="game-resume">Continue your quest</span>
+        {% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% endblock %}

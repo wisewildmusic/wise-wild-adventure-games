@@ -1,0 +1,1074 @@
+:root {
+  --bg: #0f0f0f;
+  --panel: #1a1a1a;
+  --text: #ffffff;
+  --muted: #c4c4c4;
+  --accent: #80a2d8;
+  --accent-hover: #a0bbe6;
+  --ink: #0f0f0f;
+  /* All text is Wise Wild Alien, the site's own font (fonts.css). The fonts after it only
+     stand in for any character it doesn't have. Before 2026-10-25 these were Cormorant
+     Garamond, Archivo and Wix Madefor Text. */
+  --title: "Wise Wild Alien", "Cormorant Garamond", Georgia, serif;
+  --display: "Wise Wild Alien", "Archivo", "Arial Black", sans-serif;
+  --body: "Wise Wild Alien", "Wix Madefor Text", Arial, sans-serif;
+  /* Python code (the adventure's challenges) needs real capitals and lining-up letters. */
+  --code: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+  --gutter: clamp(16px, 3vw, 32px);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 var(--body);
+  font-synthesis: none;  /* real Regular and Bold only, never a smeared fake bold */
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.title {
+  font: 600 1em/0.92 var(--title);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.display {
+  margin: 0;
+  font: 900 clamp(34px, 5.6vw, 57px)/1 var(--display);
+  font-stretch: 125%;
+  text-transform: uppercase;
+}
+.display--xl { font-size: clamp(40px, 8.6vw, 88px); line-height: 0.95; }
+
+.button {
+  display: inline-block;
+  padding: 9px 16px;
+  border-radius: 5px;
+  background: var(--accent);
+  color: var(--ink);
+  font: 400 13px/1.2 var(--body);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.2s, transform 0.2s;
+}
+.button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+button.button { border: 0; cursor: pointer; }
+.button[aria-pressed="true"] { background: var(--accent-hover); }
+
+/* Header */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  /* Logo on the left, button on the right, the now-playing title centred between them. */
+  display: grid;
+  grid-template-columns: 1fr minmax(0, auto) 1fr;
+  align-items: center;
+  gap: 16px;
+  height: 72px;
+  padding: 0 var(--gutter);
+  background: rgba(15, 15, 15, 0.92);
+  backdrop-filter: blur(8px);
+}
+.brand { font-size: 28px; white-space: nowrap; }
+.site-header .button { justify-self: end; }
+.brand-name {
+  display: block;
+  font: 600 1em/1 var(--title);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+/* Sized relative to the logo: 16px under the 28px logo, scaled down with it on phones. */
+.tagline { margin: 5px 0 0; font-size: 0.5714em; line-height: 1.2; }
+/* Now playing: the song's title in small glowing green letters, shown only while music
+   plays. player.js blinks the letters slowly, one at a time, in random order. */
+.now-playing {
+  min-width: 0;
+  margin: 0;
+  padding: 12px 14px;
+  overflow: hidden;
+  color: #9dff6e;
+  font: 600 13px/1.2 var(--body);
+  letter-spacing: 0.14em;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 6px rgba(157, 255, 110, 0.8), 0 0 16px rgba(157, 255, 110, 0.45);
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s;
+}
+.now-playing.is-on { opacity: 1; pointer-events: auto; }
+/* One blink: the letter fades out and back on. Keep the length in step with BLINK_MS in player.js. */
+.now-playing-letters .blink { animation: letter-blink 1.6s ease-in-out; }
+@keyframes letter-blink {
+  40%, 60% { color: rgba(157, 255, 110, 0.12); text-shadow: none; }
+}
+/* Navigation links: a bar floating at the top centre of the page, just under the header,
+   over the top of the artwork. It stays put while the page scrolls. */
+.float-nav {
+  position: fixed;
+  top: 84px;
+  left: 50%;
+  z-index: 11;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2.4vw, 26px);
+  padding: 10px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(15, 15, 15, 0.72);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: top 0.4s;
+}
+.nav-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.nav-link:hover, .nav-link[aria-pressed="true"] { color: var(--text); }
+/* The link for the page you're on glows the saucer green, lit by a tiny saucer above it. */
+.nav-link { position: relative; line-height: 1.2; }
+.nav-link[aria-current="page"] {
+  color: #9dff6e;
+  text-shadow: 0 0 6px rgba(157, 255, 110, 0.8), 0 0 16px rgba(157, 255, 110, 0.45);
+}
+.nav-ufo {
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #0d3b34;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 0 10px rgba(157, 255, 110, 0.35);
+  color: #9dff6e;
+  pointer-events: none;
+  animation: ufo-hover 3s ease-in-out infinite;
+}
+.nav-ufo svg { width: 14px; height: 14px; fill: currentColor; }
+.nav-ufo .ufo-light { fill: #0d3b34; }
+/* Its beam, shining down onto the link text. */
+.nav-ufo::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 24px;
+  height: 6px;
+  transform: translateX(-50%);
+  background: linear-gradient(rgba(157, 255, 110, 0.55), rgba(157, 255, 110, 0));
+  clip-path: polygon(35% 0, 65% 0, 100% 100%, 0 100%);
+}
+@keyframes ufo-hover { 50% { transform: translate(-50%, -2px); } }
+
+/* Hero */
+.hero { padding: 0 var(--gutter); }
+.hero-card {
+  position: relative;
+  min-height: clamp(460px, 76vh, 720px);
+  overflow: hidden;
+  background: #262626;
+}
+.hero-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+}
+
+/* Kept for screen readers and search engines; not shown on screen. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Sections */
+.section { padding: clamp(56px, 8vw, 88px) var(--gutter); }
+.section--panel { background: var(--panel); }
+.wrap { max-width: 1100px; margin: 0 auto; }
+
+.split {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+.split p { margin: 0; max-width: 420px; }
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-top: clamp(40px, 6vw, 64px);
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 44px 26px;
+  background: var(--panel);
+}
+.card h3 {
+  margin: 0 0 18px;
+  font: 900 22px/1.1 var(--display);
+  font-stretch: 125%;
+  text-transform: uppercase;
+}
+.card p { flex: 1; margin: 0 0 24px; color: var(--muted); font-size: 14px; }
+
+/* Footer */
+.site-footer { padding: clamp(64px, 9vw, 104px) var(--gutter) 40px; text-align: center; }
+.site-footer .display { max-width: 1000px; margin: 0 auto; }
+.socials {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: clamp(28px, 4vw, 44px) 0 28px;
+  padding: 0;
+  list-style: none;
+}
+/* Random play: the glowing dice under "Experimental soundscapes" (dice.webp's black background
+   is transparent, so they float on the footer). They spin when rolled and pulse while their
+   random play runs. */
+.dice-button {
+  display: block;
+  margin: clamp(32px, 5vw, 56px) auto 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+.dice-button img {
+  display: block;
+  width: clamp(150px, 18vw, 220px);
+  height: auto;
+  transition: transform 0.3s, filter 0.3s;
+}
+.dice-button:hover img { transform: scale(1.06); filter: brightness(1.2); }
+.dice-button[aria-pressed="true"] img { animation: dice-glow 2.4s ease-in-out infinite; }
+.dice-button.is-rolling img { animation: dice-roll 0.9s cubic-bezier(0.2, 0.8, 0.3, 1); }
+@keyframes dice-glow {
+  50% { filter: brightness(1.35) drop-shadow(0 0 14px rgba(157, 255, 110, 0.55)); }
+}
+@keyframes dice-roll {
+  from { transform: rotate(-540deg) scale(0.6); }
+}
+.socials button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--brand);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  color: #fff;
+  /* Brand marks (f, ig, in...) keep a plain font so they look like the real logos. */
+  font: 600 12px/1 "Wix Madefor Text", "Helvetica Neue", Arial, sans-serif;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.socials button:hover { transform: translateY(-2px); }
+
+/* Flying saucer link at the end of the footer icons, colored after the alien/saucer artwork:
+   on the home page it opens the song library, on the song library it opens the song manager. */
+.ufo-link {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0d3b34;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  color: #9dff6e;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.ufo-link svg { width: 22px; height: 22px; fill: currentColor; }
+.ufo-link .ufo-light { fill: #0d3b34; }
+.ufo-link:hover {
+  transform: translateY(-2px);
+  box-shadow: inset 0 0 0 1px rgba(157, 255, 110, 0.5), 0 0 14px rgba(157, 255, 110, 0.45);
+}
+
+/* Footer lines matching wisewildmusic.com's words, glowing lime green, centred. */
+.legal {
+  margin: 0;
+  color: #a3ff00;
+  font: 400 clamp(12px, 1.3vw, 16px)/1.5 var(--body);
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-shadow: 0 0 6px rgba(163, 255, 0, 0.5);
+}
+
+.empty { margin: 24px 0 28px; color: var(--muted); }
+
+/* Song library: the alien/saucer artwork fills the screen under the header and the
+   song table sits in its bottom-right quarter, scrolling inside it. */
+.stage {
+  display: grid;
+  grid-template: 1fr 1fr / 1fr 1fr;
+  height: max(560px, calc(100vh - 72px));
+  height: max(560px, calc(100dvh - 72px));
+  padding: clamp(12px, 2vw, 24px);
+  /* Positioned so the alien's head stays clear of the floating navigation bar. */
+  background: var(--stage-art) 38% 12% / cover no-repeat, #0b1414;
+}
+.library {
+  grid-area: 2 / 2;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: rgba(8, 12, 12, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.library-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.library-head h1 {
+  margin: 0;
+  font: 900 20px/1.1 var(--display);
+  font-stretch: 125%;
+  text-transform: uppercase;
+}
+.library-head p { margin: 0; color: var(--muted); font-size: 13px; white-space: nowrap; }
+.library-scroll { flex: 1; min-height: 0; overflow-y: auto; }
+.library-empty { margin: 18px; }
+
+.song-table { width: 100%; border-collapse: collapse; }
+.song-table th, .song-table td {
+  padding: 9px 16px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.song-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgb(14, 19, 19);
+  color: var(--muted);
+  font: 900 11px/1.2 var(--display);
+  font-stretch: 125%;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.song-table tbody .col-title { font-size: 14px; font-weight: 600; }
+.song-table td { color: var(--muted); font-size: 13px; white-space: nowrap; }
+.song-table .col-size { text-align: right; font-variant-numeric: tabular-nums; }
+.song-table .col-play { width: 1%; text-align: center; }
+.song-table tbody tr:last-child > * { border-bottom: 0; }
+.song-table tbody tr:hover { background: rgba(255, 255, 255, 0.04); }
+.song-table tbody tr.is-playing { background: rgba(128, 162, 216, 0.16); }
+.song-table tr.is-playing .col-title { color: var(--accent); }
+
+/* Song library page: a narrower, taller, see-through panel whose text glows saucer green.
+   Columns 5:3 make it 3/4 of a half-width panel (at least 440px); rows 1:15 make it nearly
+   twice the height of a bottom-quarter panel, ending just below the floating navigation bar. */
+.stage--songs { grid-template: 1fr 15fr / 5fr minmax(min(440px, 100%), 3fr); }
+.library--glow {
+  background: rgba(8, 12, 12, 0.4);
+  backdrop-filter: blur(6px);
+  color: #9dff6e;
+  text-shadow: 0 0 6px rgba(157, 255, 110, 0.55);
+}
+.library--glow .library-head h1 {
+  text-shadow: 0 0 6px rgba(157, 255, 110, 0.8), 0 0 16px rgba(157, 255, 110, 0.45);
+}
+.library--glow .library-head p,
+.library--glow .song-table td,
+.library--glow .song-table thead th { color: inherit; }
+.library--glow .song-table thead th { background: rgba(8, 14, 12, 0.85); }
+.library--glow .song-table tr.is-playing .col-title { color: #fff; }
+/* "Song library" with the song count and size centred under it; Play All on the right. */
+.library-head--songs { align-items: center; }
+.library-title { display: grid; justify-items: center; gap: 4px; text-align: center; }
+.library--glow .button { flex: none; text-shadow: none; }
+
+/* A wider, easy-to-spot scroll bar for the song panels (computers; phones scroll the page). */
+.library-scroll::-webkit-scrollbar { width: 18px; }
+.library-scroll::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.06); }
+.library-scroll::-webkit-scrollbar-thumb {
+  min-height: 48px;
+  border: 3px solid transparent;
+  border-radius: 9px;
+  background: rgba(157, 255, 110, 0.55) padding-box;
+}
+.library-scroll::-webkit-scrollbar-thumb:hover { background-color: rgba(157, 255, 110, 0.85); }
+@supports not selector(::-webkit-scrollbar) {
+  .library-scroll { scrollbar-color: rgba(157, 255, 110, 0.55) rgba(255, 255, 255, 0.06); }
+}
+
+.play {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+.play:hover { background: var(--accent-hover); transform: scale(1.06); }
+.play svg { width: 14px; height: 14px; fill: currentColor; }
+.play .icon-pause, .play.is-playing .icon-play { display: none; }
+.play.is-playing .icon-pause { display: block; }
+
+/* Popularity meter: 7 thin bars that glow green, lit by a song's plays compared with the
+   most-played song in the music folder. */
+.song-table .col-pop { width: 1%; text-align: center; white-space: nowrap; }
+.pop-meter { display: inline-flex; gap: 2px; height: 12px; vertical-align: middle; }
+.pop-meter i { width: 3px; border-radius: 1px; background: rgba(157, 255, 110, 0.16); }
+.pop-meter i.on { background: #9dff6e; box-shadow: 0 0 4px rgba(157, 255, 110, 0.85); }
+/* The column heading: the same 7 bars rising like a signal-strength icon. */
+.pop-meter--header { align-items: flex-end; }
+.pop-meter--header i { background: currentColor; opacity: 0.75; }
+.pop-meter--header i:nth-child(1) { height: 30%; }
+.pop-meter--header i:nth-child(2) { height: 42%; }
+.pop-meter--header i:nth-child(3) { height: 54%; }
+.pop-meter--header i:nth-child(4) { height: 66%; }
+.pop-meter--header i:nth-child(5) { height: 78%; }
+.pop-meter--header i:nth-child(6) { height: 90%; }
+.pop-meter--header i:nth-child(7) { height: 100%; }
+@media (min-width: 561px) {
+  /* Tighter columns so title, size, date, popularity and play all fit the narrow panel. */
+  .library--glow .song-table th, .library--glow .song-table td { padding-left: 10px; padding-right: 10px; }
+}
+.play-count { margin-left: 6px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; vertical-align: middle; }
+
+/* Song manager (/manage/): the song library layout plus upload, archive and sign-in. */
+.library-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.upload-form { display: flex; align-items: center; gap: 12px; margin: 0; }
+.upload-button { position: relative; overflow: hidden; }
+.upload-button input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.upload-button:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; }
+.upload-form.is-uploading .upload-button { opacity: 0.6; pointer-events: none; }
+.upload-status { color: var(--muted); font-size: 13px; }
+.library-tools form { margin: 0; }
+
+.flash {
+  margin: 0;
+  padding: 9px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 13px;
+}
+.flash--ok { background: rgba(157, 255, 110, 0.08); color: #b8ff94; }
+.flash--error { background: rgba(255, 120, 100, 0.1); color: #ffb4a8; }
+
+.song-table .col-archive { width: 1%; text-align: center; }
+.archive-form { margin: 0; }
+.archive {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.archive:hover { border-color: #ffc46b; color: #ffc46b; }
+
+/* Rename: a small pencil just after each title's last word; while editing, the title becomes
+   a text box with save (tick) and cancel (cross) buttons. */
+.rename-form { margin: 0; }
+.rename-input, .rename-actions,
+.rename-form.is-editing .song-name, .rename-form.is-editing .track-id, .rename-form.is-editing .rename-edit { display: none; }
+/* Word tags: glowing green pills. In the music library a row of them sits above the songs
+   (each with how many songs have it; the picked one lights up), and each song's tags show
+   small under its title. */
+.tag-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 96px;
+  overflow-y: auto;
+  padding: 10px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid rgba(157, 255, 110, 0.45);
+  border-radius: 999px;
+  background: rgba(157, 255, 110, 0.06);
+  color: #9dff6e;
+  font: 400 12px/1.3 var(--body);
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 6px rgba(157, 255, 110, 0.5);
+  white-space: nowrap;
+}
+button.tag-chip { cursor: pointer; transition: background-color 0.2s, box-shadow 0.2s; }
+button.tag-chip:hover { background: rgba(157, 255, 110, 0.16); }
+.tag-chip[aria-pressed="true"] {
+  background: #9dff6e;
+  color: #0b1a0b;
+  text-shadow: none;
+  box-shadow: 0 0 10px rgba(157, 255, 110, 0.7);
+}
+.tag-count { font-size: 10px; opacity: 0.75; font-variant-numeric: tabular-nums; }
+.tag-filter-note { flex-basis: 100%; margin: 2px 0 0; font-size: 11px; opacity: 0.85; }
+.tag-filter-note:empty { display: none; }
+.row-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.tag-mini {
+  padding: 0 7px;
+  border: 1px solid rgba(157, 255, 110, 0.3);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: 400 10px/1.5 var(--body);
+  letter-spacing: 0.03em;
+  opacity: 0.8;
+  cursor: pointer;
+}
+.tag-mini:hover { opacity: 1; border-color: rgba(157, 255, 110, 0.7); }
+.song-table tr[hidden] { display: none; }
+
+/* Tags in the song manager: chips with a cross under each title, and a small box to add more. */
+.tag-editor { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 6px; }
+.tag-list { display: contents; }
+.tag-list li { list-style: none; }
+.tag-remove-form, .tag-add-form { margin: 0; }
+.tag-chip--edit { gap: 2px; padding: 1px 3px 1px 8px; font-size: 11px; }
+.tag-remove {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.tag-remove:hover { background: rgba(255, 120, 100, 0.25); color: #ffb4a8; }
+.tag-remove svg, .tag-icon-button svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tag-add-input {
+  width: 64px;
+  padding: 2px 8px;
+  border: 1px dashed rgba(157, 255, 110, 0.45);
+  border-radius: 999px;
+  background: transparent;
+  color: #9dff6e;
+  font: 400 11px/1.3 var(--body);
+  transition: width 0.2s;
+}
+.tag-add-input::placeholder { color: rgba(157, 255, 110, 0.7); }
+.tag-add-input:focus { width: 150px; outline: 2px solid var(--accent); outline-offset: 1px; border-style: solid; }
+.is-saving { opacity: 0.5; pointer-events: none; }
+
+/* The song manager's tag list, for renaming, merging and deleting tags. */
+.tag-admin { border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+.tag-admin summary { padding: 9px 18px; color: #9dff6e; font-size: 13px; cursor: pointer; }
+.tag-admin-list { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; padding: 0 18px 6px; list-style: none; }
+.tag-admin-list li { display: flex; align-items: center; gap: 4px; }
+.tag-rename-form, .tag-delete-form { display: flex; align-items: center; gap: 4px; margin: 0; }
+.tag-name-input {
+  width: 110px;
+  padding: 3px 8px;
+  border: 1px solid rgba(157, 255, 110, 0.35);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  color: #9dff6e;
+  font: 400 12px/1.3 var(--body);
+}
+.tag-name-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.tag-icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.tag-icon-button:hover { border-color: #9dff6e; color: #9dff6e; }
+.tag-icon-button--delete:hover { border-color: #ffb4a8; color: #ffb4a8; }
+.tag-admin-note { margin: 0; padding: 0 18px 10px; color: var(--muted); font-size: 12px; }
+
+/* The song's record ID, after its title (the song manager only). */
+.track-id { margin-left: 6px; color: var(--muted); font-size: 11px; font-weight: 400; letter-spacing: 0.04em; white-space: nowrap; }
+.rename-form.is-editing { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.rename-form.is-editing .rename-input { display: block; }
+.rename-form.is-editing .rename-actions { display: flex; gap: 6px; }
+.rename-input {
+  flex: 1 1 140px;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--text);
+  font: inherit;
+}
+.rename-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.rename-edit, .rename-save, .rename-cancel {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background-color 0.2s;
+}
+.rename-edit { width: 22px; height: 22px; margin-left: 6px; vertical-align: middle; }
+.rename-edit:hover, .rename-cancel:hover { border-color: var(--accent); color: var(--accent); }
+.rename-save { border-color: #9dff6e; color: #9dff6e; }
+.rename-save:hover { background: rgba(157, 255, 110, 0.15); }
+.rename-form svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.archive svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
+
+.login-panel { align-self: center; justify-self: center; width: min(420px, 100%); }
+.login-form { display: grid; gap: 10px; padding: 18px; }
+.login-form label { color: var(--muted); font-size: 13px; }
+.login-form input {
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--text);
+  font: inherit;
+}
+.login-form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.login-form .button { justify-self: start; margin-top: 4px; }
+
+/* The Lost Treasure of Pythonia (/adventure/): one glowing panel with the scene's picture,
+   its title, the explorer's status, what just happened, and the choices or the question.
+   Code (questions, answers and explanations) is in a code font, because Python cares about
+   capitals and the site font turns small letters into small capitals. */
+.adventure { padding: 84px var(--gutter) 40px; }  /* clears the floating links */
+.quest {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 18px;
+  border: 1px solid rgba(157, 255, 110, 0.25);
+  border-radius: 12px;
+  background: rgba(8, 14, 12, 0.72);
+  box-shadow: 0 0 40px rgba(157, 255, 110, 0.08);
+}
+.scene-art { margin: 0; overflow: hidden; border: 1px solid rgba(157, 255, 110, 0.3); border-radius: 8px; }
+.scene-art img { display: block; width: 100%; height: auto; }
+.scene-title {
+  margin: 16px 0 8px;
+  color: #9dff6e;
+  font: 700 clamp(20px, 3.4vw, 30px)/1.15 var(--display);
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(157, 255, 110, 0.7), 0 0 20px rgba(157, 255, 110, 0.35);
+}
+.quest .flash { margin: 10px 0; border-radius: 6px; }
+.quest-status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 18px;
+  margin: 8px 0 4px;
+  padding: 8px 12px;
+  border-block: 1px solid rgba(157, 255, 110, 0.18);
+  font-size: 13px;
+}
+.quest-status div { display: flex; align-items: center; gap: 6px; }
+.quest-status dt { color: var(--muted); }
+.quest-status dd { margin: 0; color: #9dff6e; }
+.lives { display: inline-flex; gap: 3px; }
+.heart { width: 15px; height: 15px; fill: #ff6b81; filter: drop-shadow(0 0 3px rgba(255, 107, 129, 0.7)); }
+.heart--lost { fill: rgba(255, 255, 255, 0.15); filter: none; }
+.quest-log { margin: 12px 0; }
+.quest-log p { margin: 0 0 10px; }
+.story { font-size: 16px; line-height: 1.65; }
+.event { padding-left: 10px; border-left: 3px solid; font-size: 14px; }
+.event--points { border-color: #9dff6e; color: #b8ff94; }
+.event--relic { border-color: #ffd257; color: #ffe08a; }
+.event--life { border-color: #ff6b81; color: #ffb4bf; }
+.event--info { border-color: var(--accent); color: var(--muted); }
+.verdict { font: 700 18px/1.3 var(--display); letter-spacing: 0.04em; }
+.verdict--right { color: #9dff6e; text-shadow: 0 0 8px rgba(157, 255, 110, 0.6); }
+.verdict--wrong { color: #ff8a9a; }
+.why { padding: 8px 12px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); color: var(--muted); font: 14px/1.55 var(--code); }
+.why-label { color: #9dff6e; }
+.quest code, .quest pre { font-family: var(--code); }
+.verdict code { font-size: 15px; color: #fff; }
+.field-label { display: block; margin: 14px 0 8px; color: #9dff6e; font-size: 15px; }
+.quest-choices, .answers { display: grid; gap: 8px; margin: 0; }
+.answers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.quest-choice, .answer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border: 1px solid rgba(157, 255, 110, 0.35);
+  border-radius: 8px;
+  background: rgba(157, 255, 110, 0.05);
+  color: var(--text);
+  font: 400 15px/1.35 var(--body);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.quest-choice:hover, .answer:hover, .quest-choice:focus-visible, .answer:focus-visible {
+  border-color: #9dff6e;
+  background: rgba(157, 255, 110, 0.12);
+  box-shadow: 0 0 12px rgba(157, 255, 110, 0.35);
+}
+.answer code { font-size: 15px; word-break: break-word; }
+.key {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #9dff6e;
+  color: #0b1a0b;
+  font: 700 13px/1 var(--code);
+}
+.challenge { margin-top: 6px; padding: 14px; border: 1px solid rgba(255, 210, 87, 0.35); border-radius: 10px; background: rgba(255, 210, 87, 0.04); }
+.challenger { margin: 0 0 4px; color: #ffe08a; font-size: 15px; }
+.challenge-prompt { margin: 0 0 10px; font-size: 16px; }
+.code {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: #050807;
+  color: #d8ffe0;
+  font-size: 15px;
+  line-height: 1.5;
+  tab-size: 4;
+}
+.is-sending { opacity: 0.6; pointer-events: none; }
+.quest-start .name-input {
+  width: min(320px, 100%);
+  padding: 10px 12px;
+  border: 1px solid rgba(157, 255, 110, 0.45);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #9dff6e;
+  font: 400 17px/1.3 var(--body);
+}
+.name-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.name-input:invalid { border-color: #ff8a9a; }
+.field-help { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+.levels { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; }
+.level { position: relative; display: block; cursor: pointer; }
+.level input { position: absolute; opacity: 0; }
+.level-card {
+  display: grid;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid rgba(157, 255, 110, 0.25);
+  border-radius: 8px;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.level-name { color: #9dff6e; font: 700 16px/1.2 var(--display); }
+.level-facts { font-size: 13px; }
+.level-topics { color: var(--muted); font-size: 12px; }
+.level input:checked + .level-card { border-color: #9dff6e; background: rgba(157, 255, 110, 0.1); box-shadow: 0 0 12px rgba(157, 255, 110, 0.3); }
+.level input:focus-visible + .level-card { outline: 2px solid var(--accent); outline-offset: 2px; }
+.quest-begin { margin-top: 16px; font-size: 15px; }
+.quest-end { margin: 6px 0 12px; text-align: center; }
+.final-score { margin: 0 0 6px; font-size: 18px; }
+.final-score strong { color: #9dff6e; font-size: 24px; text-shadow: 0 0 8px rgba(157, 255, 110, 0.6); }
+.new-high { color: #ffe08a; font: 700 18px/1.3 var(--display); text-shadow: 0 0 10px rgba(255, 210, 87, 0.7); }
+.journey { margin: 0 0 6px; color: var(--muted); font-size: 14px; }
+/* A winner's way on to the next level, score and all. */
+.quest-advance {
+  max-width: 520px;
+  margin: 16px auto 18px;
+  padding: 2px 16px 16px;
+  border: 1px solid rgba(157, 255, 110, 0.45);
+  border-radius: 8px;
+  background: rgba(157, 255, 110, 0.06);
+  box-shadow: 0 0 18px rgba(157, 255, 110, 0.12);
+}
+.quest-advance .quest-begin { margin-top: 12px; }
+/* The choice of adventure games (/adventure/): the flying saucer, then the same games in words. */
+.choose-game { max-width: 940px; margin: 0 auto; text-align: center; }
+.choose-intro { margin: 0 auto 16px; max-width: 560px; color: var(--muted); }
+.game-wheel {
+  position: relative;
+  isolation: isolate;
+  margin: 0 0 16px;
+  overflow: hidden;
+  border: 1px solid rgba(157, 255, 110, 0.3);
+  border-radius: 10px;
+}
+.game-wheel img { display: block; width: 100%; height: auto; }
+/* Each panel is the size of the whole picture, cut down to the panel's shape. Only what's left can be
+   clicked, and the shapes scale with the picture: they're percentages of its width and height. With no
+   shape of its own a panel is cut down to nothing, so it can't cover the saucer. The shapes come from
+   tools/trace-saucer-panels.py, which reads them off the picture. The last is the hub at the very center of
+   the saucer, the AI game. No shape overlaps another. A panel whose game can't run here stays a span with
+   no link (app.py's ADVENTURE_COMING). */
+.game-spot {
+  position: absolute;
+  inset: 0;
+  clip-path: circle(0);
+  mix-blend-mode: screen;
+  transition: background-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.game-spot:hover, .game-spot:active { background-color: rgba(157, 255, 110, 0.35); }
+.game-spot--soon { cursor: default; }
+.game-spot--soon:hover, .game-spot--soon:active { background-color: transparent; }
+.game-spot--python { clip-path: polygon(51.6% 44.0%, 48.3% 43.9%, 47.9% 43.5%, 47.4% 42.6%, 41.0% 20.5%, 41.1% 19.1%, 42.1% 17.8%, 46.2% 16.2%, 51.6% 15.8%, 54.9% 16.2%, 57.4% 16.9%, 59.1% 17.9%, 60.0% 19.0%, 60.1% 20.0%, 59.8% 21.4%, 54.5% 37.6%, 52.7% 42.7%, 52.1% 43.6%); }
+.game-spot--csharp { clip-path: polygon(56.7% 46.3%, 54.9% 45.0%, 54.4% 44.2%, 54.5% 43.5%, 62.8% 23.1%, 63.5% 21.6%, 64.5% 20.4%, 65.3% 20.0%, 66.4% 20.0%, 70.1% 21.9%, 73.6% 24.7%, 75.5% 26.6%, 76.4% 28.1%, 76.5% 29.0%, 76.3% 29.9%, 75.5% 31.0%, 74.2% 32.3%, 63.6% 41.3%, 57.6% 45.9%); }
+.game-spot--vbnet { clip-path: polygon(64.5% 51.2%, 59.5% 51.1%, 58.8% 50.2%, 58.3% 48.4%, 59.1% 47.2%, 66.1% 42.2%, 78.9% 34.2%, 80.5% 34.0%, 81.6% 35.0%, 83.2% 38.1%, 84.4% 42.1%, 84.7% 45.0%, 84.6% 47.7%, 83.6% 49.6%, 82.7% 50.4%, 78.5% 50.8%); }
+.game-spot--ansi-sql { clip-path: polygon(73.1% 69.0%, 71.9% 69.0%, 70.8% 68.3%, 64.8% 63.1%, 59.0% 57.3%, 58.1% 55.9%, 58.7% 54.1%, 59.2% 53.2%, 60.0% 52.9%, 72.5% 53.0%, 75.5% 53.1%, 79.7% 53.8%, 81.0% 54.1%, 81.7% 54.8%, 82.3% 55.8%, 82.3% 56.8%, 81.4% 59.2%, 80.1% 61.7%, 76.7% 66.3%, 74.7% 68.1%); }
+.game-spot--t-sql { clip-path: polygon(54.4% 77.0%, 52.5% 76.7%, 51.8% 75.9%, 51.3% 74.9%, 51.0% 68.5%, 50.9% 61.2%, 51.1% 60.4%, 51.6% 59.9%, 55.5% 57.9%, 56.6% 57.9%, 61.1% 62.3%, 66.6% 68.4%, 68.2% 70.8%, 68.1% 71.7%, 67.5% 72.6%, 64.8% 74.0%, 59.8% 75.9%); }
+.game-spot--pl-sql { clip-path: polygon(45.8% 76.9%, 41.4% 76.4%, 35.7% 74.8%, 31.3% 72.6%, 30.5% 71.6%, 30.4% 70.8%, 30.9% 69.7%, 32.1% 68.3%, 38.1% 62.2%, 42.8% 57.9%, 44.0% 57.8%, 47.9% 59.8%, 48.5% 60.4%, 48.7% 61.1%, 47.6% 74.4%, 46.8% 76.1%); }
+.game-spot--cpp { clip-path: polygon(40.2% 51.2%, 26.1% 50.9%, 17.6% 50.4%, 16.5% 49.7%, 15.5% 48.0%, 15.3% 46.6%, 15.5% 43.9%, 16.4% 39.8%, 18.0% 36.0%, 19.4% 34.2%, 21.2% 33.9%, 30.7% 39.7%, 40.7% 47.2%, 41.4% 48.0%, 41.5% 48.8%, 41.0% 50.4%); }
+.game-spot--javascript { clip-path: polygon(43.4% 46.2%, 42.6% 46.1%, 40.4% 44.3%, 28.1% 34.0%, 24.9% 30.9%, 24.0% 29.4%, 24.0% 28.2%, 26.4% 25.1%, 30.1% 22.1%, 34.4% 19.8%, 35.5% 19.7%, 36.3% 20.1%, 37.6% 22.0%, 39.4% 26.3%, 45.6% 43.4%, 45.6% 44.1%, 45.1% 44.9%); }
+.game-spot--aspnet { clip-path: polygon(26.8% 68.8%, 25.7% 68.8%, 24.3% 67.7%, 22.0% 65.1%, 20.0% 62.1%, 18.4% 58.9%, 17.7% 56.9%, 17.6% 55.7%, 18.2% 54.6%, 18.9% 54.0%, 20.3% 53.6%, 27.9% 52.9%, 39.9% 52.9%, 40.5% 53.2%, 41.2% 54.4%, 41.6% 56.0%, 40.4% 57.4%, 32.4% 64.7%, 28.3% 67.9%); }
+.game-spot--ai { clip-path: polygon(58.0% 52.1%, 57.7% 54.0%, 56.9% 55.8%, 55.6% 57.3%, 54.0% 58.5%, 52.0% 59.2%, 49.9% 59.5%, 47.8% 59.2%, 45.9% 58.5%, 44.2% 57.3%, 42.9% 55.8%, 42.1% 54.0%, 41.9% 52.1%, 42.1% 50.1%, 42.9% 48.3%, 44.2% 46.8%, 45.9% 45.6%, 47.8% 44.9%, 49.9% 44.6%, 52.0% 44.9%, 54.0% 45.6%, 55.6% 46.8%, 56.9% 48.3%, 57.7% 50.1%); }
+.choose-soon { margin: -6px 0 16px; color: var(--muted); font-size: 13px; }
+.game-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 16px; text-align: left; }
+.game-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 0;
+  overflow: hidden;
+  border: 1px solid rgba(157, 255, 110, 0.3);
+  border-radius: 10px;
+  background: rgba(157, 255, 110, 0.04);
+  text-decoration: none;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.game-choice:hover, .game-choice:focus-visible { border-color: #9dff6e; box-shadow: 0 0 16px rgba(157, 255, 110, 0.3); transform: translateY(-2px); }
+.game-language { display: flex; align-items: center; gap: 8px; margin: 0 14px; color: #9dff6e; font: 700 22px/1.2 var(--code); }
+.game-title { margin: 0 14px; font: 700 15px/1.3 var(--display); }
+.game-blurb { margin: 0 14px; color: var(--muted); font-size: 13px; }
+.game-champion { margin: 2px 14px 0; color: #ffe08a; font-size: 13px; }
+.game-resume { margin: 2px 14px 0; color: #9cc4ff; font-size: 13px; font-weight: 700; }
+/* The bonus dragon, offered after a win: fiery, above the other choices. */
+.quest-dragon {
+  max-width: 520px;
+  margin: 16px auto 18px;
+  padding: 2px 16px 16px;
+  border: 1px solid rgba(255, 150, 60, 0.55);
+  border-radius: 8px;
+  background: rgba(255, 120, 40, 0.08);
+  box-shadow: 0 0 18px rgba(255, 120, 40, 0.18);
+}
+.quest-dragon .field-label { color: #ffb067; }
+.quest-dragon .quest-begin { margin-top: 12px; }
+/* The final boss: blue like Python's eye, with a red warning. */
+.quest-boss {
+  max-width: 560px;
+  margin: 16px auto 18px;
+  padding: 2px 18px 18px;
+  border: 1px solid rgba(110, 170, 255, 0.6);
+  border-radius: 8px;
+  background: rgba(60, 110, 220, 0.1);
+  box-shadow: 0 0 22px rgba(80, 140, 255, 0.25);
+}
+.quest-boss .field-label { color: #9cc4ff; font-size: 17px; }
+.quest-boss .quest-begin { margin-top: 12px; }
+.boss-warning { margin: 10px 0 0; color: #ff8a9a; font-size: 13px; font-weight: 700; }
+.boss-won { color: #ffe08a; font: 700 22px/1.3 var(--display); text-shadow: 0 0 14px rgba(255, 210, 87, 0.85); }
+.all-lost { color: #ff8a9a; font: 700 18px/1.3 var(--display); text-shadow: 0 0 10px rgba(255, 80, 100, 0.6); }
+.hall-table tbody tr.hall-master th { color: #ffe08a; }
+.recent-quests .result-master { color: #ffe08a; text-shadow: 0 0 6px rgba(255, 210, 87, 0.6); }
+/* A winner's choices side by side (stacked on phones): the other path, the next level. */
+.carry-on {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 12px;
+  max-width: 640px;
+  margin: 0 auto 18px;
+}
+.carry-on:has(> :only-child) { max-width: 520px; }
+.carry-on .quest-advance { display: flex; flex-direction: column; align-items: center; max-width: none; margin: 0; }
+.carry-on .field-help { flex: 1; }
+.carry-on .field-label { margin-bottom: 4px; }
+.carry-on .button { white-space: normal; }  /* "Explore the Whispering Forest" on the narrowest phones */
+.carry-on .quest-begin + .quest-begin { margin-top: 8px; }  /* two paths left: one button each */
+.button--quiet { background: transparent; color: var(--text); box-shadow: inset 0 0 0 1px var(--accent); }
+.button--quiet:hover { background: rgba(128, 162, 216, 0.18); }
+.quest-end .field-help + .button { margin-top: 10px; }
+.quest-leave { margin: 16px 0 0; text-align: right; }
+.link-button { padding: 0; border: 0; background: none; color: var(--muted); font: 400 13px/1.3 var(--body); text-decoration: underline; cursor: pointer; }
+.link-button:hover { color: var(--text); }
+.hall { margin-top: 22px; padding-top: 14px; border-top: 1px solid rgba(157, 255, 110, 0.18); }
+.hall h2 { margin: 0 0 10px; color: #9dff6e; font: 700 18px/1.2 var(--display); text-align: center; text-transform: uppercase; letter-spacing: 0.05em; }
+.hall h3 { margin: 16px 0 6px; color: var(--muted); font-size: 14px; }
+.hall-scroll { overflow-x: auto; }
+.hall-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.hall-table th, .hall-table td { padding: 6px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); text-align: right; white-space: nowrap; }
+.hall-table th:first-child, .hall-table td:last-child { text-align: left; }
+.hall-table thead th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+.hall-table tbody th { color: #9dff6e; }
+.not-yet { color: var(--muted); text-align: left !important; }
+.hall-note { margin: 8px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
+.recent-quests { margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.recent-quests li { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 4px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.recent-quests time { color: var(--muted); }
+.recent-quests .who { color: #9dff6e; }
+.recent-quests .result-won { color: #ffe08a; }
+.recent-quests .result-lost { color: #ff8a9a; }
+@media (max-width: 560px) {
+  .adventure { padding-top: 76px; }
+  .quest { padding: 12px; }
+  .answers { grid-template-columns: 1fr; }
+  .story { font-size: 15px; }
+}
+
+/* 404 */
+/* 404 page, and simple notice pages such as About ("Under Construction") */
+.lost, .page-notice { min-height: 60vh; display: grid; place-content: center; justify-items: center; text-align: center; }
+.lost h1 { margin: 0 0 16px; font-size: clamp(56px, 10vw, 112px); }
+.page-notice h1 { margin: 0 0 16px; font-size: clamp(28px, 9vw, 112px); }
+.lost p { margin: 0 0 24px; color: var(--muted); }
+.lost .eyebrow, .page-notice .eyebrow { margin: 0 0 8px; color: var(--accent); font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; }
+
+@media (max-width: 760px) {
+  .split, .cards { grid-template-columns: 1fr; }
+  .display, .display--xl { font-size: 8.4vw; }
+  /* Song library: too narrow for quarters, so artwork on top and song table underneath. */
+  .stage {
+    grid-template: minmax(200px, 38vh) auto / 1fr;
+    height: auto;
+    min-height: calc(100vh - 72px);
+    background-position: 40% 20%;
+  }
+  .library { grid-area: 2 / 1; }  /* No scroll area inside the panel on phones and tablets: the whole list shows and the
+     page scrolls, because phone scroll bars are thin, hidden and can't be widened. */
+  .library-scroll { overflow: visible; }
+  .song-table thead th { position: static; }
+}
+
+@media (max-width: 640px) {
+  /* No room between the logo and the button: the now-playing title shows in a strip just
+     under the header instead, and the floating links move down to make room for it. */
+  .site-header { grid-template-columns: max-content minmax(0, 1fr); }
+  .now-playing {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    padding: 4px var(--gutter) 6px;
+    background: rgba(15, 15, 15, 0.92);
+    font-size: 11px;
+  }
+  .site-header.has-now-playing + .float-nav { top: 107px; }
+}
+
+@media (max-width: 560px) {
+  /* Each song becomes a two-line row: title on top, size and date below, play on the right. */
+  .song-table thead { display: none; }
+  .song-table tr {
+    display: grid;
+    grid-template-columns: auto auto auto 1fr auto;
+    grid-template-areas: "title title title title play" "size date pop . play";
+    column-gap: 10px;
+    row-gap: 2px;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .song-table tbody tr:last-child { border-bottom: 0; }
+  .song-table th, .song-table td { padding: 0; border: 0; }
+  .song-table .col-title { grid-area: title; }
+  .song-table .col-size { grid-area: size; text-align: left; font-size: 12px; }
+  .song-table .col-date { grid-area: date; font-size: 12px; }
+  .song-table .col-play { grid-area: play; width: auto; }
+  .song-table .col-pop { grid-area: pop; width: auto; text-align: left; }
+  .song-table--manage tr {
+    grid-template-columns: auto auto auto 1fr auto auto;
+    grid-template-areas: "title title title title play archive" "size date pop . play archive";
+  }
+  .song-table .col-archive { grid-area: archive; width: auto; }
+}
+
+@media (max-width: 480px) {
+  /* A tighter floating bar so all five links fit on a phone. */
+  .float-nav { gap: 14px; padding: 9px 16px; font-size: 11.5px; letter-spacing: 0.05em; }
+}
+
+@media (max-width: 360px) {
+  /* The smallest phones: tighter still. */
+  .float-nav { gap: 9px; padding: 8px 11px; font-size: 11px; letter-spacing: 0.03em; }
+}
+
+@media (max-width: 440px) {
+  .site-header { gap: 12px; }
+  .brand { font-size: 22px; }
+  .socials { gap: 8px; }
+  /* Wraps onto two lines only when the screen is too narrow for one. */
+  .site-header .button { padding: 8px 12px; font-size: 12px; white-space: normal; text-align: center; }
+  /* "Music library" stays on one line beside Play All, a little smaller on small phones. */
+  .library--glow .library-head h1 { font-size: clamp(14px, calc(9.4vw - 16px), 20px); white-space: nowrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition: none !important; animation: none !important; }
+}

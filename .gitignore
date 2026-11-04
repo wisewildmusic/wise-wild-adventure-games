@@ -1,0 +1,26 @@
+# Build output: remade by the scripts in tools/
+bin/
+obj/
+csharp/build/
+vbnet/build/
+cpp/build/
+aspnet/build/
+site/sharpia
+site/visualia
+site/templaria
+site/scriptoria
+site/razoria
+
+# Made when the site runs
+__pycache__/
+*.pyc
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# The site's private files and its songs: never put these in the repository
+site/secret_key
+site/manage_password.hash
+site/music/
+site/archives/

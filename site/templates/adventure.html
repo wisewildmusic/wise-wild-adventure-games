@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}{{ texts.title }} | Wise Wild Music{% endblock %}
+
+{#- One page for all the games, Python, C#, VB.NET, C++, JavaScript, ASP.NET and the three SQL ones: `texts` holds each game's own words.
+    Everything shown here (names, story, questions) goes through the template's automatic
+    escaping, so none of it can ever act as code on the page. -#}
+
+{% macro hall() %}
+<section class="hall" aria-labelledby="hall-title">
+  <h2 id="hall-title">Hall of Explorers</h2>
+  <div class="hall-scroll">
+    <table class="hall-table">
+      <thead>
+        <tr><th scope="col">Level</th><th scope="col">Played</th><th scope="col">Wins</th><th scope="col">Latest</th><th scope="col">High</th><th scope="col">Best explorer</th></tr>
+      </thead>
+      <tbody>
+        {% for level, stats in levels.items() %}
+        <tr>
+          <th scope="row">{{ level|title }}</th>
+          {% if stats.played %}
+          <td>{{ stats.played }}</td><td>{{ stats.wins }}</td><td>{{ stats.latest }}</td><td>{{ stats.high }}</td><td>{{ stats.best or "-" }}</td>
+          {% else %}
+          <td colspan="5" class="not-yet">not played yet</td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+        {# Masters: battles with the final boss and the explorers who won them. #}
+        <tr class="hall-master">
+          <th scope="row">{{ texts.master }}</th>
+          {% if master.played %}
+          <td>{{ master.played }}</td><td>{{ master.wins }}</td><td>{{ master.latest }}</td><td>{{ master.high }}</td><td>{{ master.best or "-" }}</td>
+          {% else %}
+          <td colspan="5" class="not-yet">not faced yet</td>
+          {% endif %}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="hall-note">Match a high score to take it: the latest explorer to reach it holds it.
+    {{ texts.hall_note }}</p>
+  {% if recent %}
+  <h3>Recent quests</h3>
+  <ol class="recent-quests">
+    {% for game in recent %}
+    <li>
+      <time datetime="{{ game.finished_at }}">{{ game.finished|shortdate }}</time>
+      <span class="who">{{ game.explorer }}</span>
+      <span>{{ game.journey }}</span>
+      <span>{{ game.score }} pts</span>
+      {% if game.python == "won" %}<span class="result-master">{{ texts.master }}</span>
+      {% elif game.python == "lost" %}<span class="result-lost">{{ texts.lost_to_boss }}</span>
+      {% else %}<span class="{{ 'result-won' if game.status == 'win' else 'result-lost' }}">{{ texts.found if game.status == "win" else "Quest failed" }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  {% endif %}
+</section>
+{% endmacro %}
+
+{% block content %}
+{% set banner, picture, description = scenes[quest.scene if quest else "start"] %}
+{#- The final boss's picture is shown whole, 3:2 (1200x800); every other scene is 16:9 (800x450). #}
+{%- set boss_scene = ('img/adventure/' ~ picture) == boss_picture %}
+<section class="adventure">
+  <article class="quest">
+    <figure class="scene-art">
+      <img src="{{ url_for('static', filename='img/adventure/' ~ picture) }}" alt="{{ description }}" {% if boss_scene %}width="1200" height="800"{% else %}width="800" height="450"{% endif %}>
+    </figure>
+    <h1 class="scene-title">{{ banner }}</h1>
+
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+    <p class="flash flash--{{ category }}" role="status">{{ message }}</p>
+    {% endfor %}
+
+    {% if not quest %}
+    {# --- The start: the tale, the explorer's name and the difficulty --- #}
+    <div class="quest-log">
+      {% for paragraph in texts.intro %}
+      <p class="story">{{ paragraph }}</p>
+      {% endfor %}
+    </div>
+    <form class="quest-start" method="post" action="{{ url_for('adventure_start', game_key=game_key) }}">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <label class="field-label" for="explorer">What is your name, explorer?</label>
+      <input class="name-input" id="explorer" name="explorer" type="text" value="{{ explorer }}"
+             maxlength="64" data-max="{{ name_max }}" pattern="[A-Za-z][A-Za-z0-9 ]{0,{{ name_max - 1 }}}" placeholder="Explorer"
+             autocomplete="off" autocapitalize="words" spellcheck="false" aria-describedby="name-rules"
+             title="Letters, numbers and spaces only, starting with a letter">
+      <p class="field-help" id="name-rules">Letters, numbers and spaces only, starting with a letter
+        (up to {{ name_max }}). Leave it blank to be "Explorer".</p>
+      <fieldset class="levels">
+        <legend class="field-label">Choose your difficulty</legend>
+        {% for level, s in settings.items() %}
+        <label class="level">
+          <input type="radio" name="difficulty" value="{{ level }}"{% if loop.first %} checked{% endif %}>
+          <span class="level-card">
+            <span class="level-name">{{ level|title }}</span>
+            <span class="level-facts">{{ s.lives }} {{ "life" if s.lives == 1 else "lives" }} · x{{ s.multiplier }} points · High score: {{ levels[level].high }}</span>
+            <span class="level-topics">Topics: {{ s.topics }}</span>
+          </span>
+        </label>
+        {% endfor %}
+      </fieldset>
+      <p class="field-help">Win a quest and you can carry your score on: down a path you didn't take,
+        or up to the next level.</p>
+      <button class="button quest-begin" type="submit">Begin the quest</button>
+      <p class="field-help">Music plays while you explore. Stop it any time with the Stop music button at the top.</p>
+      <p class="field-help"><a href="{{ url_for('adventure') }}">Choose a different language</a></p>
+    </form>
+    {{ hall() }}
+
+    {% else %}
+    {% set player = quest.player %}
+    {% set most_lives = settings[player.difficulty].lives %}
+    {# --- A quest: status, what just happened, then what the game is waiting for --- #}
+    <dl class="quest-status">
+      <div><dt>Explorer</dt><dd>{{ player.name }}</dd></div>
+      <div><dt>Level</dt><dd>{{ player.difficulty|title }}</dd></div>
+      <div><dt>Lives</dt><dd class="lives" aria-label="{{ player.lives }} of {{ most_lives }}">
+        {%- for i in range(most_lives) -%}
+        <svg class="heart{% if i >= player.lives %} heart--lost{% endif %}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.2 0 3.6 1.2 4.3 2.4.7-1.2 2.1-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg>
+        {%- endfor -%}
+      </dd></div>
+      <div><dt>Score</dt><dd>{{ player.score }}</dd></div>
+      <div class="relics"><dt>Relics</dt><dd>{{ player.inventory|join(", ") or "none" }}</dd></div>
+    </dl>
+
+    <div class="quest-log" aria-live="polite">
+      {% for kind, text in quest.log %}
+      {% if kind == "story" %}<p class="story">{{ text }}</p>
+      {% elif kind == "correct" %}<p class="verdict verdict--right">Correct!</p>
+      {% elif kind == "wrong" %}<p class="verdict verdict--wrong">Wrong! The answer was <code>{{ text }}</code></p>
+      {% elif kind == "why" %}<p class="why"><span class="why-label">Why:</span> {{ text }}</p>
+      {% else %}<p class="event event--{{ kind }}">{{ text }}</p>{% endif %}
+      {% endfor %}
+    </div>
+
+    {% if quest.prompt and quest.prompt.kind == "choice" %}
+    <form class="quest-choices" method="post" action="{{ url_for('adventure_move', game_key=game_key) }}">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <input type="hidden" name="step" value="{{ step }}">
+      <p class="field-label">What will you do?</p>
+      {% for option in quest.prompt.options %}
+      <button class="quest-choice" type="submit" name="move" value="{{ loop.index }}" data-key="{{ loop.index }}">
+        <span class="key">{{ loop.index }}</span><span>{{ option }}</span>
+      </button>
+      {% endfor %}
+    </form>
+
+    {% elif quest.prompt %}
+    <div class="challenge">
+      <p class="challenger">{{ quest.prompt.challenger }} challenges you:</p>
+      <p class="challenge-prompt">{{ quest.prompt.prompt }}</p>
+      {% if quest.prompt.code %}<pre class="code"><code>{{ quest.prompt.code }}</code></pre>{% endif %}
+      <form class="answers" method="post" action="{{ url_for('adventure_move', game_key=game_key) }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <input type="hidden" name="step" value="{{ step }}">
+        {% for letter, option in quest.prompt.options %}
+        <button class="answer" type="submit" name="move" value="{{ letter }}" data-key="{{ letter }}">
+          <span class="key">{{ letter }}</span><code>{{ option }}</code>
+        </button>
+        {% endfor %}
+      </form>
+    </div>
+
+    {% else %}
+    {# --- The quest is over --- #}
+    {% set level = player.difficulty %}
+    <div class="quest-end">
+      <p class="final-score">{{ player.name }}'s final score: <strong>{{ player.score }}</strong></p>
+      {% if quest.boss == "won" %}
+      <p class="boss-won">{{ texts.boss_won }}</p>
+      {% elif quest.boss == "lost" %}
+      <p class="all-lost">{{ texts.boss_lost }}</p>
+      {% endif %}
+      {% if quest.boss != "lost" %}
+      {% if row.carried %}
+      <p class="journey">{{ journey }}: {{ row.carried }} points carried over, {{ player.score - row.carried }} earned on this quest</p>
+      {% endif %}
+      {% if row.new_high %}
+      <p class="new-high">New {{ level|title }} high score!</p>
+      {% elif row.id == levels[level].best_id %}
+      <p class="new-high">You matched the {{ level|title }} high score! It's yours now on the Hall of Explorers.</p>
+      {% else %}
+      <p>{{ level|title }} high score to beat: {{ levels[level].high }} ({{ levels[level].best or "nobody yet" }})</p>
+      {% endif %}
+      {% if conquered == "every path" %}
+      <p class="new-high">{{ texts.conquered_every_path }}</p>
+      {% elif conquered == "every level" %}
+      <p class="new-high">{{ texts.conquered_every_level }}</p>
+      {% endif %}
+      {% endif %}
+
+      {% if dragon %}
+      {# The bonus: this path and level's dragon, for one harder riddle and its treasure. #}
+      <form class="quest-dragon" method="post" action="{{ url_for('adventure_move', game_key=game_key) }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <input type="hidden" name="step" value="{{ step }}">
+        <p class="field-label">Bonus: {{ scenes[dragon.scene][0] }}</p>
+        <p class="field-help">A dragon sleeps on a chest of treasure nearby. Wake it and answer its riddle,
+          a tougher one, for {{ dragon_points }} bonus points. Get it wrong and you flee with nothing lost.</p>
+        <button class="button quest-begin" type="submit" name="move" value="dragon">Wake the dragon</button>
+      </form>
+      {% endif %}
+
+      {% if boss %}
+      {# The final boss, after the win that completes every path on every level. #}
+      <form class="quest-boss" method="post" action="{{ url_for('adventure_move', game_key=game_key) }}" data-confirm="{{ texts.boss_confirm }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <input type="hidden" name="step" value="{{ step }}">
+        <p class="field-label">{{ texts.boss_offer_title }}</p>
+        <p class="field-help">{{ texts.boss_offer|replace("{points}", boss_points|string) }}</p>
+        <p class="boss-warning">{{ texts.boss_warning }}</p>
+        <button class="button quest-begin" type="submit" name="move" value="{{ boss_move }}">{{ texts.boss_button }}</button>
+      </form>
+      {% endif %}
+
+      {% if next_level or untaken %}
+      {# A winner carries on, score and all: down a path they didn't take, or up a level. #}
+      <p class="field-label">Take your {{ player.score }} points further?</p>
+      <div class="carry-on">
+        {% if untaken %}
+        {% set s = settings[level] %}
+        <form class="quest-advance" method="post" action="{{ url_for('adventure_advance', game_key=game_key) }}">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <input type="hidden" name="to" value="other-path">
+          <p class="field-label">{{ "The paths you didn't take" if untaken|length > 1 else "The path you didn't take" }}</p>
+          <p class="field-help">Go back for {% for path in untaken %}{{ path_names[path] }}{{ " or " if not loop.last }}{% endfor %},
+            still on {{ level|title }}: {{ s.lives }} {{ "life" if s.lives == 1 else "lives" }} · x{{ s.multiplier }} points</p>
+          {% for path in untaken %}
+          <button class="button quest-begin" type="submit" name="path" value="{{ path }}">{{ paths[path] }}</button>
+          {% endfor %}
+        </form>
+        {% endif %}
+        {% if next_level %}
+        {% set s = settings[next_level] %}
+        <form class="quest-advance" method="post" action="{{ url_for('adventure_advance', game_key=game_key) }}">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <p class="field-label">The next level: {{ next_level|title }}</p>
+          <p class="field-help">{{ s.lives }} {{ "life" if s.lives == 1 else "lives" }} · x{{ s.multiplier }} points ·
+            Topics: {{ s.topics }}</p>
+          <button class="button quest-begin" type="submit">Advance to {{ next_level|title }}</button>
+        </form>
+        {% endif %}
+      </div>
+      {% endif %}
+      <form method="post" action="{{ url_for('adventure_new', game_key=game_key) }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        {% if next_level or untaken %}
+        <p class="field-help">Or start a new quest from the beginning, with a fresh score.</p>
+        <button class="button button--quiet" type="submit">Play again</button>
+        {% elif quest.boss == "lost" %}
+        <p class="field-label">Start over from the beginning?</p>
+        <button class="button" type="submit">Start over</button>
+        {% else %}
+        <p class="field-label">{{ "Would you like to play again?" if quest.result == "win" else "Your quest has failed. Would you like to try again?" }}</p>
+        <button class="button" type="submit">{{ "Play again" if quest.result == "win" else "Try again" }}</button>
+        {% endif %}
+      </form>
+    </div>
+    {{ hall() }}
+    {% endif %}
+
+    {% if quest.prompt and not quest.result %}{# (not during a dragon's riddle: the quest is won already) #}
+    <form class="quest-leave" method="post" action="{{ url_for('adventure_new', game_key=game_key) }}">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <button class="link-button" type="submit">Leave this quest</button>
+    </form>
+    {% endif %}
+    {% endif %}
+  </article>
+</section>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Music Library | Wise Wild Music{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='songs.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+{% from "macros.html" import pop_meter %}
+<section class="stage stage--songs" style="--stage-art: url('{{ url_for('static', filename=background) }}')">
+  <div class="library library--glow">
+    <div class="library-head library-head--songs">
+      <div class="library-title">
+        <h1>Music library</h1>
+        {% if tracks %}
+        <p>{{ tracks|length }} Track{{ '' if tracks|length == 1 else 's' }} &middot; {{ tracks|sum(attribute='size')|filesize }}</p>
+        {% endif %}
+      </div>
+      {% if tracks %}
+      <button class="button" type="button" data-play-all data-stop-label="Stop">Play All</button>
+      {% endif %}
+    </div>
+    {% if tags %}
+    {# Word tags: picking one shows and plays just the songs with it; picking it again shows them all (songs.js). #}
+    <div class="tag-filter" role="group" aria-label="Play songs by tag">
+      {% for tag in tags %}
+      <button class="tag-chip tag-pick" type="button" data-tag="{{ tag.id }}" data-name="{{ tag.name }}" aria-pressed="false"
+              title="Play every song tagged {{ tag.name }}">{{ tag.name }}<span class="tag-count">{{ tag.count }}</span></button>
+      {% endfor %}
+      <p class="tag-filter-note" aria-live="polite"></p>
+    </div>
+    {% endif %}
+    {% if tracks %}
+    <div class="library-scroll">
+      <table class="song-table">
+        <thead>
+          <tr>
+            <th scope="col" class="col-title">Music Title</th>
+            <th scope="col" class="col-size">Size</th>
+            <th scope="col" class="col-date">Date</th>
+            <th scope="col" class="col-pop" title="Popularity">
+              <span class="pop-meter pop-meter--header" aria-hidden="true">{% for i in range(7) %}<i></i>{% endfor %}</span>
+              <span class="visually-hidden">Popularity</span>
+            </th>
+            <th scope="col" class="col-play">Play</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tracks %}
+          <tr data-tags="{{ t.tags|map(attribute='id')|join(' ') }}">
+            <th scope="row" class="col-title">
+              {{ t.title }}
+              {% if t.tags %}
+              <span class="row-tags">
+                {% for tag in t.tags %}<button class="tag-mini tag-pick" type="button" data-tag="{{ tag.id }}" title="Play every song tagged {{ tag.name }}">{{ tag.name }}</button>{% endfor %}
+              </span>
+              {% endif %}
+            </th>
+            <td class="col-size">{{ t.size|filesize }}</td>
+            <td class="col-date"><time datetime="{{ t.added.date().isoformat() }}">{{ t.added|shortdate }}</time></td>
+            <td class="col-pop">{{ pop_meter(t.id, t.bars) }}</td>
+            <td class="col-play">
+              <button class="play" type="button" data-song="{{ song_link(t.id) }}" data-track="{{ t.id }}" data-title="{{ t.title }}" aria-label="Play {{ t.title }}">
+                <svg class="icon-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg>
+                <svg class="icon-pause" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z"/></svg>
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <audio id="song-audio" preload="none"></audio>
+    {% else %}
+    <p class="empty library-empty">No songs here yet. New experiments are on the way.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+
+{# A flying saucer after the social icons, like the home page's, that goes back to the home page. #}
+{% block footer_icons %}
+      <li>
+        <a class="ufo-link" href="{{ url_for('home') }}" aria-label="Home page" title="Home page">
+          {% include "ufo-icon.html" %}
+        </a>
+      </li>
+{% endblock %}

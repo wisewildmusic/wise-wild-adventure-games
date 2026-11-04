@@ -1,0 +1,8 @@
+{#- Popularity meter: 7 small bars, lit in proportion to a song's plays compared with the
+    most-played song in the music folder. static/player.js relights them after a play. -#}
+{% macro pop_meter(track, bars, plays=None) -%}
+<span class="pop-meter" data-track="{{ track }}" role="img"
+      aria-label="Popularity {{ bars }} of 7" title="Popularity {{ bars }} of 7{% if plays is not none %}, {{ plays }} play{{ '' if plays == 1 else 's' }}{% endif %}">
+  {%- for i in range(7) %}<i{% if i < bars %} class="on"{% endif %}></i>{% endfor -%}
+</span>
+{%- endmacro %}
